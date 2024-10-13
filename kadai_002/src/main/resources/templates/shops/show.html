@@ -223,8 +223,8 @@
 													</div>
 													<select class="form-control" th:field="*{reservationTime}">
 														<option value="" disabled selected>選択してください</option>
-														<option th:each="time : ${timeOptions}" th:value="${time}"
-															th:text="${time}">
+														<option th:each="optionTime : ${optionTimes}" th:value="${optionTime}"
+															th:text="${#temporals.format(optionTime, 'H:mm')}">
 														</option>
 													</select>
 												</div>

@@ -5,8 +5,6 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -66,6 +64,17 @@ public class ReservationController {
 		this.favoriteService = favoriteService;
 		this.favoriteRepository = favoriteRepository;
 	}
+	public List<LocalTime> getOptionTimes(LocalTime openingTime, LocalTime closingTime, int intervalMinutes) {
+        List<LocalTime> optionTimes = new ArrayList<>();
+        LocalTime currentTime = openingTime;
+
+        while (currentTime.isBefore(closingTime) || currentTime.equals(closingTime)) {
+            optionTimes.add(currentTime);
+            currentTime = currentTime.plusMinutes(intervalMinutes);
+        }
+
+        return optionTimes;
+    }
 
 	@GetMapping("/reservations")
 	public String index(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
@@ -87,7 +96,8 @@ public class ReservationController {
 			BindingResult bindingResult,
 			RedirectAttributes redirectAttributes,
 			Model model,
-			@AuthenticationPrincipal UserDetailsImpl userDetailsImpl) {
+			@AuthenticationPrincipal UserDetailsImpl userDetailsImpl) 
+	{
 		Favorite favorite = null;
 		boolean isFavorite = false;
 
@@ -102,14 +112,11 @@ public class ReservationController {
 				favorite = favoriteRepository.findByShopAndUser(shop, user);
 			}
 		}
-
+		
 		// 時間オプションを再生成してモデルに追加
-		List<String> options = new ArrayList<>();
-		options = IntStream.rangeClosed(0, 47)
- 				.mapToObj(i -> LocalTime.of(0, 0).plusMinutes(30 * i).toString())
- 				.collect(Collectors.toList());
-
-		model.addAttribute("timeOptions", options); // Modelに時間オプションを追加する 
+		List<LocalTime> optionTimes = getOptionTimes(shop.getOpeningTime(), shop.getClosingTime(), 30);
+		
+		model.addAttribute("optionTimes", optionTimes); // Modelに時間オプションを追加する 
 		Integer numberOfPeople = reservationInputForm.getNumberOfPeople();
 		
 		  
